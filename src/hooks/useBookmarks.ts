@@ -3,6 +3,16 @@ import type { Bookmark } from '../types';
 
 const LS_KEY = 'bm-dashboard-v1';
 
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 async function loadFromApi(): Promise<Bookmark[]> {
   const res = await fetch('/api/settings');
   if (!res.ok) throw new Error();
@@ -46,7 +56,7 @@ export function useBookmarks() {
     (data: Omit<Bookmark, 'id' | 'createdAt'>) => {
       const next: Bookmark = {
         ...data,
-        id: crypto.randomUUID(),
+        id: generateId(),
         createdAt: Date.now(),
       };
       commit([...bookmarks, next]);
