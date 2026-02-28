@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-const STORAGE_KEY = 'bm-theme';
+const LS_KEY = 'bm-theme';
 
 type ThemePref = 'light' | 'dark' | 'system';
 
@@ -16,14 +16,33 @@ function applyTheme(pref: ThemePref) {
 }
 
 export function useTheme() {
-  const [pref, setPref] = useState<ThemePref>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as ThemePref | null;
-    return stored ?? 'system';
-  });
+  const [pref, setPref] = useState<ThemePref>('system');
+  const loaded = useRef(false);
 
+  // Load theme from API on mount; fall back to localStorage in local dev
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        loaded.current = true;
+        if (data.theme) setPref(data.theme as ThemePref);
+      })
+      .catch(() => {
+        loaded.current = true;
+        const stored = localStorage.getItem(LS_KEY) as ThemePref | null;
+        if (stored) setPref(stored);
+      });
+  }, []);
+
+  // Apply and save whenever pref changes (skip save until initial load is done)
   useEffect(() => {
     applyTheme(pref);
-    localStorage.setItem(STORAGE_KEY, pref);
+    if (!loaded.current) return;
+    fetch('/api/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: pref }),
+    }).catch(() => localStorage.setItem(LS_KEY, pref));
   }, [pref]);
 
   // Keep in sync when OS theme changes (only matters when pref === 'system')

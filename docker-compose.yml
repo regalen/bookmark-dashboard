@@ -1,0 +1,14 @@
+services:
+  app:
+    image: ghcr.io/regalen/bookmark-dashboard:latest
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+    volumes:
+      # Option A: Named Docker volume (managed by Docker — easiest)
+      - bookmark-data:/data
+      # Option B: Bind mount (point to a folder on your machine for direct file access)
+      # - ./data:/data
+
+volumes:
+  bookmark-data:

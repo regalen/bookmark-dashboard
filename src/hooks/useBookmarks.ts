@@ -1,27 +1,45 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Bookmark } from '../types';
 
-const STORAGE_KEY = 'bm-dashboard-v1';
+const LS_KEY = 'bm-dashboard-v1';
 
-function load(): Bookmark[] {
+async function loadFromApi(): Promise<Bookmark[]> {
+  const res = await fetch('/api/settings');
+  if (!res.ok) throw new Error();
+  const data = await res.json();
+  return Array.isArray(data.bookmarks) ? data.bookmarks : [];
+}
+
+function loadFromLocalStorage(): Bookmark[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(LS_KEY);
     return raw ? (JSON.parse(raw) as Bookmark[]) : [];
   } catch {
     return [];
   }
 }
 
-function save(bookmarks: Bookmark[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+async function saveToApi(bookmarks: Bookmark[]): Promise<void> {
+  const res = await fetch('/api/settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bookmarks }),
+  });
+  if (!res.ok) throw new Error();
 }
 
 export function useBookmarks() {
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>(load);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+
+  useEffect(() => {
+    loadFromApi()
+      .then(bm => setBookmarks(bm))
+      .catch(() => setBookmarks(loadFromLocalStorage()));
+  }, []);
 
   const commit = useCallback((next: Bookmark[]) => {
-    save(next);
     setBookmarks(next);
+    saveToApi(next).catch(() => localStorage.setItem(LS_KEY, JSON.stringify(next)));
   }, []);
 
   const add = useCallback(
