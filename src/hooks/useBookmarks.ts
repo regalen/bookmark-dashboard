@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { Bookmark } from '../types';
+import type { Bookmark, Group } from '../types';
 
 const LS_KEY = 'bm-dashboard-v1';
+const LS_GROUPS_KEY = 'bm-groups-v1';
 
 function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -13,79 +14,134 @@ function generateId(): string {
   });
 }
 
-async function loadFromApi(): Promise<Bookmark[]> {
+interface Settings {
+  bookmarks: Bookmark[];
+  groups: Group[];
+}
+
+async function loadFromApi(): Promise<Settings> {
   const res = await fetch('/api/settings');
   if (!res.ok) throw new Error();
   const data = await res.json();
-  return Array.isArray(data.bookmarks) ? data.bookmarks : [];
+  return {
+    bookmarks: Array.isArray(data.bookmarks) ? data.bookmarks : [],
+    groups: Array.isArray(data.groups) ? data.groups : [],
+  };
 }
 
-function loadFromLocalStorage(): Bookmark[] {
+function loadFromLocalStorage(): Settings {
   try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? (JSON.parse(raw) as Bookmark[]) : [];
+    const rawBm = localStorage.getItem(LS_KEY);
+    const rawGr = localStorage.getItem(LS_GROUPS_KEY);
+    return {
+      bookmarks: rawBm ? (JSON.parse(rawBm) as Bookmark[]) : [],
+      groups: rawGr ? (JSON.parse(rawGr) as Group[]) : [],
+    };
   } catch {
-    return [];
+    return { bookmarks: [], groups: [] };
   }
 }
 
-async function saveToApi(bookmarks: Bookmark[]): Promise<void> {
+async function patchApi(patch: Partial<Settings>): Promise<void> {
   const res = await fetch('/api/settings', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ bookmarks }),
+    body: JSON.stringify(patch),
   });
   if (!res.ok) throw new Error();
 }
 
 export function useBookmarks() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
 
   useEffect(() => {
     loadFromApi()
-      .then(bm => setBookmarks(bm))
-      .catch(() => setBookmarks(loadFromLocalStorage()));
+      .then(({ bookmarks: bm, groups: gr }) => {
+        setBookmarks(bm);
+        setGroups(gr);
+      })
+      .catch(() => {
+        const { bookmarks: bm, groups: gr } = loadFromLocalStorage();
+        setBookmarks(bm);
+        setGroups(gr);
+      });
   }, []);
 
-  const commit = useCallback((next: Bookmark[]) => {
-    setBookmarks(next);
-    saveToApi(next).catch(() => localStorage.setItem(LS_KEY, JSON.stringify(next)));
+  const patchSettings = useCallback((patch: Partial<Settings>) => {
+    if (patch.bookmarks !== undefined) setBookmarks(patch.bookmarks);
+    if (patch.groups !== undefined) setGroups(patch.groups);
+    patchApi(patch).catch(() => {
+      if (patch.bookmarks !== undefined) localStorage.setItem(LS_KEY, JSON.stringify(patch.bookmarks));
+      if (patch.groups !== undefined) localStorage.setItem(LS_GROUPS_KEY, JSON.stringify(patch.groups));
+    });
   }, []);
+
+  // ── Bookmark operations ────────────────────────────────────────
 
   const add = useCallback(
     (data: Omit<Bookmark, 'id' | 'createdAt'>) => {
-      const next: Bookmark = {
-        ...data,
-        id: generateId(),
-        createdAt: Date.now(),
-      };
-      commit([...bookmarks, next]);
+      const next: Bookmark = { ...data, id: generateId(), createdAt: Date.now() };
+      patchSettings({ bookmarks: [...bookmarks, next] });
     },
-    [bookmarks, commit]
+    [bookmarks, patchSettings]
   );
 
   const update = useCallback(
     (id: string, data: Partial<Omit<Bookmark, 'id' | 'createdAt'>>) => {
-      commit(bookmarks.map((b) => (b.id === id ? { ...b, ...data } : b)));
+      patchSettings({ bookmarks: bookmarks.map((b) => (b.id === id ? { ...b, ...data } : b)) });
     },
-    [bookmarks, commit]
+    [bookmarks, patchSettings]
   );
 
   const remove = useCallback(
     (id: string) => {
-      commit(bookmarks.filter((b) => b.id !== id));
+      patchSettings({ bookmarks: bookmarks.filter((b) => b.id !== id) });
     },
-    [bookmarks, commit]
+    [bookmarks, patchSettings]
   );
 
   const togglePin = useCallback(
     (id: string) => {
-      commit(
-        bookmarks.map((b) => (b.id === id ? { ...b, pinned: !b.pinned } : b))
-      );
+      patchSettings({ bookmarks: bookmarks.map((b) => (b.id === id ? { ...b, pinned: !b.pinned } : b)) });
     },
-    [bookmarks, commit]
+    [bookmarks, patchSettings]
   );
 
-  return { bookmarks, add, update, remove, togglePin };
+  // ── Group operations ───────────────────────────────────────────
+
+  const addGroup = useCallback(
+    (name: string): string => {
+      const id = generateId();
+      patchSettings({ groups: [...groups, { id, name: name.trim(), createdAt: Date.now() }] });
+      return id;
+    },
+    [groups, patchSettings]
+  );
+
+  const updateGroup = useCallback(
+    (id: string, name: string) => {
+      patchSettings({ groups: groups.map((g) => (g.id === id ? { ...g, name: name.trim() } : g)) });
+    },
+    [groups, patchSettings]
+  );
+
+  const deleteGroup = useCallback(
+    (id: string) => {
+      patchSettings({
+        groups: groups.filter((g) => g.id !== id),
+        bookmarks: bookmarks.filter((b) => !b.groupIds.includes(id)),
+      });
+    },
+    [bookmarks, groups, patchSettings]
+  );
+
+  const reorderGroups = useCallback(
+    (newOrder: Group[]) => {
+      patchSettings({ groups: newOrder });
+    },
+    [patchSettings]
+  );
+
+  return { bookmarks, groups, add, update, remove, togglePin, addGroup, updateGroup, deleteGroup, reorderGroups };
 }

@@ -1,3 +1,9 @@
+export interface Group {
+  id: string;
+  name: string;
+  createdAt: number;
+}
+
 export interface Bookmark {
   id: string;
   title: string;
@@ -7,6 +13,7 @@ export interface Bookmark {
   description?: string;
   pinned: boolean;
   createdAt: number;
+  groupIds: string[];
 }
 
 export type ViewMode = 'grid' | 'list';

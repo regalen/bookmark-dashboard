@@ -3,22 +3,26 @@ import type { Bookmark, ViewMode } from './types';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useTheme } from './hooks/useTheme';
 import { Header } from './components/Header';
+import { GroupTabs } from './components/GroupTabs';
 import { SearchBar } from './components/SearchBar';
 import { TagFilter } from './components/TagFilter';
 import { BookmarkCard } from './components/BookmarkCard';
 import { BookmarkRow } from './components/BookmarkRow';
 import { BookmarkModal } from './components/BookmarkModal';
+import { ManageGroupsModal } from './components/ManageGroupsModal';
 import './styles/index.css';
 
 export default function App() {
-  const { bookmarks, add, update, remove, togglePin } = useBookmarks();
+  const { bookmarks, groups, add, update, remove, togglePin, addGroup, updateGroup, deleteGroup, reorderGroups } = useBookmarks();
   const { isDark, toggle: toggleTheme } = useTheme();
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [activeGroupId, setActiveGroupId] = useState<string | 'all'>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Bookmark | null>(null);
+  const [manageGroupsOpen, setManageGroupsOpen] = useState(false);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -30,6 +34,7 @@ export default function App() {
     const q = searchQuery.toLowerCase();
     return bookmarks
       .filter((b) => {
+        if (activeGroupId !== 'all' && !b.groupIds.includes(activeGroupId)) return false;
         if (activeTags.length > 0) {
           if (!activeTags.every((t) => b.tags.includes(t))) return false;
         }
@@ -51,7 +56,7 @@ export default function App() {
         if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
         return a.title.localeCompare(b.title);
       });
-  }, [bookmarks, searchQuery, activeTags]);
+  }, [bookmarks, searchQuery, activeTags, activeGroupId]);
 
   const toggleTag = (tag: string) => {
     setActiveTags((prev) => (prev.includes(tag) ? [] : [tag]));
@@ -85,6 +90,11 @@ export default function App() {
     closeModal();
   };
 
+  const handleDeleteGroup = (id: string) => {
+    deleteGroup(id);
+    if (activeGroupId === id) setActiveGroupId('all');
+  };
+
   return (
     <>
       <Header
@@ -93,6 +103,13 @@ export default function App() {
         viewMode={viewMode}
         onViewToggle={() => setViewMode((v) => (v === 'grid' ? 'list' : 'grid'))}
         onAddClick={openAdd}
+      />
+
+      <GroupTabs
+        groups={groups}
+        activeGroupId={activeGroupId}
+        onSelect={setActiveGroupId}
+        onManageClick={() => setManageGroupsOpen(true)}
       />
 
       <main className="main">
@@ -161,8 +178,23 @@ export default function App() {
         <BookmarkModal
           initial={editTarget}
           existingTags={allTags}
+          groups={groups}
+          activeGroupId={activeGroupId}
           onSave={handleSave}
           onClose={closeModal}
+          onCreateGroup={addGroup}
+        />
+      )}
+
+      {manageGroupsOpen && (
+        <ManageGroupsModal
+          groups={groups}
+          bookmarks={bookmarks}
+          onAdd={addGroup}
+          onRename={updateGroup}
+          onDelete={handleDeleteGroup}
+          onReorder={reorderGroups}
+          onClose={() => setManageGroupsOpen(false)}
         />
       )}
     </>

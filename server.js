@@ -10,13 +10,25 @@ const DATA_FILE = join(DATA_DIR, 'settings.json');
 
 mkdirSync(DATA_DIR, { recursive: true });
 
-const DEFAULT_SETTINGS = { bookmarks: [], theme: 'system' };
+const DEFAULT_SETTINGS = { bookmarks: [], groups: [], theme: 'system' };
 let settings = { ...DEFAULT_SETTINGS };
 
 if (existsSync(DATA_FILE)) {
   try {
     settings = { ...DEFAULT_SETTINGS, ...JSON.parse(readFileSync(DATA_FILE, 'utf-8')) };
   } catch {}
+}
+
+// Migration: if no groups exist, create a default 'Personal' group and assign
+// all existing bookmarks to it. Persists immediately so it only runs once.
+if (!Array.isArray(settings.groups) || settings.groups.length === 0) {
+  const personalGroup = { id: 'personal', name: 'Personal', createdAt: Date.now() };
+  settings.groups = [personalGroup];
+  settings.bookmarks = settings.bookmarks.map(b => ({
+    ...b,
+    groupIds: Array.isArray(b.groupIds) && b.groupIds.length > 0 ? b.groupIds : ['personal'],
+  }));
+  try { writeFileSync(DATA_FILE, JSON.stringify(settings)); } catch {}
 }
 
 const MIME_TYPES = {

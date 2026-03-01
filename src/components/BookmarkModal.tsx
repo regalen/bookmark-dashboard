@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { Bookmark } from '../types';
+import type { Bookmark, Group } from '../types';
 
 interface FormState {
   title: string;
@@ -8,18 +8,25 @@ interface FormState {
   tags: string;
   description: string;
   pinned: boolean;
+  groupIds: string[];
 }
 
 interface Props {
   initial?: Bookmark | null;
   existingTags: string[];
+  groups: Group[];
+  activeGroupId: string | 'all';
   onSave: (data: Omit<Bookmark, 'id' | 'createdAt'>) => void;
   onClose: () => void;
+  onCreateGroup: (name: string) => string;
 }
 
-function toForm(b: Bookmark | null | undefined): FormState {
+function toForm(b: Bookmark | null | undefined, activeGroupId: string | 'all'): FormState {
   if (!b) {
-    return { title: '', lanUrl: '', wanUrl: '', tags: '', description: '', pinned: false };
+    return {
+      title: '', lanUrl: '', wanUrl: '', tags: '', description: '', pinned: false,
+      groupIds: activeGroupId !== 'all' ? [activeGroupId] : [],
+    };
   }
   return {
     title: b.title,
@@ -28,6 +35,7 @@ function toForm(b: Bookmark | null | undefined): FormState {
     tags: b.tags.join(', '),
     description: b.description ?? '',
     pinned: b.pinned,
+    groupIds: b.groupIds ?? [],
   };
 }
 
@@ -38,16 +46,17 @@ function parseTags(raw: string): string[] {
     .filter(Boolean);
 }
 
-export function BookmarkModal({ initial, existingTags, onSave, onClose }: Props) {
-  const [form, setForm] = useState<FormState>(() => toForm(initial));
+export function BookmarkModal({ initial, existingTags, groups, activeGroupId, onSave, onClose, onCreateGroup }: Props) {
+  const [form, setForm] = useState<FormState>(() => toForm(initial, activeGroupId));
   const [errors, setErrors] = useState<Partial<Record<'title' | 'lanUrl', string>>>({});
+  const [newGroup, setNewGroup] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setForm(toForm(initial));
+    setForm(toForm(initial, activeGroupId));
     setErrors({});
-  }, [initial]);
+  }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     titleRef.current?.focus();
@@ -61,8 +70,22 @@ export function BookmarkModal({ initial, existingTags, onSave, onClose }: Props)
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
-  const set = (field: keyof FormState, value: string | boolean) =>
+  const set = (field: keyof FormState, value: string | boolean | string[]) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  const toggleGroupId = (id: string) => {
+    const next = form.groupIds.includes(id)
+      ? form.groupIds.filter((g) => g !== id)
+      : [...form.groupIds, id];
+    set('groupIds', next);
+  };
+
+  const handleCreateGroup = () => {
+    if (!newGroup.trim()) return;
+    const id = onCreateGroup(newGroup.trim());
+    set('groupIds', [...form.groupIds, id]);
+    setNewGroup('');
+  };
 
   const activeTags = parseTags(form.tags);
 
@@ -93,6 +116,7 @@ export function BookmarkModal({ initial, existingTags, onSave, onClose }: Props)
       tags: parseTags(form.tags),
       description: form.description.trim() || undefined,
       pinned: form.pinned,
+      groupIds: form.groupIds,
     });
   };
 
@@ -174,6 +198,36 @@ export function BookmarkModal({ initial, existingTags, onSave, onClose }: Props)
                   </a>
                 )}
               </div>
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="field-label">Groups</label>
+            {groups.length > 0 && (
+              <div className="group-checkboxes">
+                {groups.map((g) => (
+                  <label key={g.id} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={form.groupIds.includes(g.id)}
+                      onChange={() => toggleGroupId(g.id)}
+                    />
+                    <span>{g.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="group-create-row">
+              <input
+                className="field-input"
+                placeholder="Create new group…"
+                value={newGroup}
+                onChange={(e) => setNewGroup(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreateGroup(); } }}
+              />
+              <button type="button" className="btn-secondary" onClick={handleCreateGroup} disabled={!newGroup.trim()}>
+                Create
+              </button>
             </div>
           </div>
 

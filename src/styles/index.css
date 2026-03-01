@@ -735,6 +735,211 @@ html, body, #root {
   cursor: pointer;
 }
 
+/* ─── Disabled buttons ─────────────────────────────────────── */
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Danger button ────────────────────────────────────────── */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 34px;
+  background: var(--danger);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+/* ─── Group tabs ────────────────────────────────────────────── */
+.group-tabs {
+  position: sticky;
+  top: 56px;
+  z-index: 90;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.group-tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.group-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.group-tab:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--tag-bg);
+}
+
+.group-tab--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.group-tab--active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-text);
+}
+
+/* ─── Manage Groups Modal ───────────────────────────────────── */
+.manage-groups-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manage-groups-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.manage-groups-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manage-groups-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.manage-groups-reorder {
+  display: flex;
+  flex-direction: column;
+}
+
+.manage-groups-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.manage-groups-count {
+  font-size: 12px;
+  color: var(--text-subtle);
+  min-width: 20px;
+  text-align: right;
+}
+
+.manage-groups-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.manage-groups-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 6px;
+}
+
+.manage-groups-edit-row .field-input {
+  flex: 1;
+}
+
+.manage-groups-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+}
+
+[data-theme="dark"] .manage-groups-delete-confirm {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.manage-groups-delete-msg {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.manage-groups-delete-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.manage-groups-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.manage-groups-add .field-input {
+  flex: 1;
+}
+
+/* ─── Group checkboxes in bookmark modal ────────────────────── */
+.group-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.group-create-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.group-create-row .field-input {
+  flex: 1;
+}
+
 /* ─── Scrollbar ────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
