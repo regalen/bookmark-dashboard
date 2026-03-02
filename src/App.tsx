@@ -26,9 +26,13 @@ export default function App() {
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
-    bookmarks.forEach((b) => b.tags.forEach((t) => set.add(t)));
+    const source =
+      activeGroupId === 'all'
+        ? bookmarks
+        : bookmarks.filter((b) => b.groupIds.includes(activeGroupId));
+    source.forEach((b) => b.tags.forEach((t) => set.add(t)));
     return Array.from(set).sort();
-  }, [bookmarks]);
+  }, [bookmarks, activeGroupId]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();

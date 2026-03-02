@@ -91,8 +91,6 @@ html, body, #root {
   padding: 0 24px;
   height: 56px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
   gap: 16px;
 }
 
@@ -773,6 +771,7 @@ button:disabled {
   padding: 10px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .group-tabs-list {

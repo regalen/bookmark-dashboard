@@ -204,16 +204,16 @@ export function BookmarkModal({ initial, existingTags, groups, activeGroupId, on
           <div className="field">
             <label className="field-label">Groups</label>
             {groups.length > 0 && (
-              <div className="group-checkboxes">
+              <div className="tag-picker">
                 {groups.map((g) => (
-                  <label key={g.id} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={form.groupIds.includes(g.id)}
-                      onChange={() => toggleGroupId(g.id)}
-                    />
-                    <span>{g.name}</span>
-                  </label>
+                  <button
+                    key={g.id}
+                    type="button"
+                    className={`tag-chip ${form.groupIds.includes(g.id) ? 'tag-chip--active' : ''}`}
+                    onClick={() => toggleGroupId(g.id)}
+                  >
+                    {g.name}
+                  </button>
                 ))}
               </div>
             )}
