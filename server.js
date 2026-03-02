@@ -10,7 +10,7 @@ const DATA_FILE = join(DATA_DIR, 'settings.json');
 
 mkdirSync(DATA_DIR, { recursive: true });
 
-const DEFAULT_SETTINGS = { bookmarks: [], groups: [], theme: 'system' };
+const DEFAULT_SETTINGS = { bookmarks: [], groups: [], theme: 'system', title: 'Bookmarks' };
 let settings = { ...DEFAULT_SETTINGS };
 
 if (existsSync(DATA_FILE)) {

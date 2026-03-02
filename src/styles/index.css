@@ -109,10 +109,23 @@ html, body, #root {
   letter-spacing: -0.02em;
 }
 
+.header-search {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.header-search .search-wrap {
+  width: 100%;
+  max-width: 360px;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 /* ─── Buttons ──────────────────────────────────────────────── */
@@ -207,9 +220,6 @@ html, body, #root {
   padding: 24px 24px 48px;
 }
 
-.toolbar {
-  margin-bottom: 16px;
-}
 
 /* ─── Search bar ───────────────────────────────────────────── */
 .search-wrap {
@@ -917,6 +927,39 @@ button:disabled {
 }
 
 .manage-groups-add .field-input {
+  flex: 1;
+}
+
+/* ─── Settings Modal ────────────────────────────────────────── */
+.settings-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-subtle);
+  margin: 0;
+}
+
+.settings-title-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.settings-title-row .field-input {
   flex: 1;
 }
 

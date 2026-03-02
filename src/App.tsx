@@ -4,16 +4,15 @@ import { useBookmarks } from './hooks/useBookmarks';
 import { useTheme } from './hooks/useTheme';
 import { Header } from './components/Header';
 import { GroupTabs } from './components/GroupTabs';
-import { SearchBar } from './components/SearchBar';
 import { TagFilter } from './components/TagFilter';
 import { BookmarkCard } from './components/BookmarkCard';
 import { BookmarkRow } from './components/BookmarkRow';
 import { BookmarkModal } from './components/BookmarkModal';
-import { ManageGroupsModal } from './components/ManageGroupsModal';
+import { SettingsModal } from './components/SettingsModal';
 import './styles/index.css';
 
 export default function App() {
-  const { bookmarks, groups, add, update, remove, togglePin, addGroup, updateGroup, deleteGroup, reorderGroups } = useBookmarks();
+  const { bookmarks, groups, title, setTitle, add, update, remove, togglePin, addGroup, updateGroup, deleteGroup, reorderGroups } = useBookmarks();
   const { isDark, toggle: toggleTheme } = useTheme();
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -22,7 +21,7 @@ export default function App() {
   const [activeGroupId, setActiveGroupId] = useState<string | 'all'>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Bookmark | null>(null);
-  const [manageGroupsOpen, setManageGroupsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -102,25 +101,24 @@ export default function App() {
   return (
     <>
       <Header
+        title={title}
         isDark={isDark}
         onThemeToggle={toggleTheme}
         viewMode={viewMode}
         onViewToggle={() => setViewMode((v) => (v === 'grid' ? 'list' : 'grid'))}
         onAddClick={openAdd}
+        onSettingsClick={() => setSettingsOpen(true)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       <GroupTabs
         groups={groups}
         activeGroupId={activeGroupId}
         onSelect={setActiveGroupId}
-        onManageClick={() => setManageGroupsOpen(true)}
       />
 
       <main className="main">
-        <div className="toolbar">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
-
         <TagFilter
           allTags={allTags}
           activeTags={activeTags}
@@ -190,15 +188,17 @@ export default function App() {
         />
       )}
 
-      {manageGroupsOpen && (
-        <ManageGroupsModal
+      {settingsOpen && (
+        <SettingsModal
+          title={title}
           groups={groups}
           bookmarks={bookmarks}
-          onAdd={addGroup}
-          onRename={updateGroup}
-          onDelete={handleDeleteGroup}
-          onReorder={reorderGroups}
-          onClose={() => setManageGroupsOpen(false)}
+          onSaveTitle={setTitle}
+          onAddGroup={addGroup}
+          onRenameGroup={updateGroup}
+          onDeleteGroup={handleDeleteGroup}
+          onReorderGroups={reorderGroups}
+          onClose={() => setSettingsOpen(false)}
         />
       )}
     </>
